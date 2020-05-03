@@ -1,4 +1,4 @@
-# proposal-ternary-placeholder
+# proposal-plus-minus-spread
 
 Minus and plus spread operators proposal for JavaScript / ECMAScript
 
