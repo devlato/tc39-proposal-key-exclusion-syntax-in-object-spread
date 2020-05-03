@@ -117,6 +117,15 @@ And the last possible solution is to assign undefined to the key to be removed â
 
 For the API consistency, I'm proposing to add a plus operator (expressed by a prepending `+` sign), which would allow to forrcefully specify a value for a given key in the same manner. 
 
+```js
+// Same
+const result = {
+  ...objA,
+  ...objB,
+  +keyToAdd: valueToAdd,
+};
+```
+
 For instance:
 
 ```js
