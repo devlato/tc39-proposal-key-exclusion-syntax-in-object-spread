@@ -1,6 +1,6 @@
 # proposal-plus-minus-spread
 
-Minus and plus spread operators proposal for JavaScript / ECMAScript
+Minus and plus operators: a spread operator enhancement proposal for JavaScript / ECMAScript
 
 
 ## Motivation
