@@ -97,6 +97,8 @@ const result = {
 };
 ```
 
+The second consequence is that in a particular object spread, a minus operator can be applied to each key only once.
+
 
 ### Alternatives
 
@@ -115,7 +117,7 @@ And the last possible solution is to assign undefined to the key to be removed â
 
 ## Additional proposal: plus operator (optional)
 
-For the API consistency, I'm proposing to add a plus operator (expressed by a prepending `+` sign), which would allow to forrcefully specify a value for a given key in the same manner. 
+For the API consistency, I'm proposing to add a plus operator (expressed by a prepending `+` sign), which would allow to forcefully specify a value for a given key in the same manner. The main benefit of that is ability to explicitely override a particular key, without having to care about code lines order.
 
 ```js
 const result = {
@@ -154,3 +156,5 @@ All the variants of the code from the example above must be executed in the foll
 1. We merge objects `objA` and `objB` into a new object
 2. We assign a value `'test'` to a key `keyToAdd` to that new object
 3. We assign the result to a const `result`.
+
+As a consequence of that, we can assert that in a particular object spread, a plus operator can be applied to each key only once.
