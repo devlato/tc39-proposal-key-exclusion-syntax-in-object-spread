@@ -113,7 +113,7 @@ The fourth possible solution is to manually assign all the properties, manually 
 And the last possible solution is to assign undefined to the key to be removed – but it's far from the ideal way to solve that issue, because the key would still exist in the object, meaning that if we enumerate through all the properties, there will be an undefined value for that key.
 
 
-## Optional proposal: plus operator
+## Additional proposal: plus operator (optional)
 
 For the API consistency, I'm proposing to add a plus operator (expressed by a prepending `+` sign), which would allow to forrcefully specify a value for a given key in the same manner. 
 
