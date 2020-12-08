@@ -55,7 +55,7 @@ I propose using minus (`-`) sign because it doesn't conflict with existing langu
 
 ### Execution order
 
-Even though the minus operator is used in the object spread body, between the curly brackets, it must be applied to the result or spread operator.
+Even though the minus operator is used in the object spread body, between the curly brackets, it must be applied to the result or spread operator (meaning that the  result would be order-independent; please see [this comment](https://github.com/devlato/proposal-plus-minus-spread/issues/3#issuecomment-740308156) for details).
 
 Let's take an example:
 
