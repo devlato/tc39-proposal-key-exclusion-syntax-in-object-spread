@@ -104,15 +104,101 @@ The second consequence is that in a particular object spread, a minus operator c
 
 For sure, there are existing alternatives to the proposed minus operator.
 
-First of all, it's the [delete operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete). Although, it cannot be used declaratively, meaning that the object produced by object spread must be assgned to a variable first, and only then we can remove the property from it by its key.
+1. The [delete operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete). Although, it cannot be used declaratively, meaning that the object produced by object spread must be assgned to a variable first, and only then we can remove the property from it by its key:
+```js
+const obj = {
+  a: 'aValue',
+  b: 'bValue',
+  key: 'value',
+};
 
-Second approach is using `Object.keys(obj).reduce(...)`, which is a block of repeated code that takes a bit of time to read and understand.
+// To avoid mutating the original object, we create a copy
+const result = { ...obj };
+// Then we imperatively delete the key
+delete result.key;
+// And since the above line isn't an rvalue, we have to return the result explicitly
+return result;
+```
 
-The third approach is even more imperative – it's `for ... of` loop or any related alternative.
+2. `Object.keys(obj).filter(...).reduce(...)` which is a block of repeated code that takes a bit of time to read and understand:
+```js
+const obj = {
+  a: 'aValue',
+  b: 'bValue',
+  key: 'value',
+};
 
-The fourth possible solution is to manually assign all the properties, manually omitting the ones that has to be omitted. It's quite a lot boilerplate code.
+// A bit wordy, ineffective, and too difficult to read
+return Object
+    .keys(obj)
+    .filter((k) => k !== 'key')
+    .reduce((acc, k) => ({ ...acc, [k]: obj[k] }), {});
+```
 
-And the last possible solution is to assign undefined to the key to be removed – but it's far from the ideal way to solve that issue, because the key would still exist in the object, meaning that if we enumerate through all the properties, there will be an undefined value for that key.
+3. The third approach is even more imperative – it's `for ... of` loop or any related alternative.
+```js
+const obj = {
+  a: 'aValue',
+  b: 'bValue',
+  key: 'value',
+};
+
+// A bit wordy `for ... of` loop
+const result = {};
+for (const [key, value] of Object.entries(obj)) {
+   if (key !== 'key') {
+      result[key] = value;
+   }
+}
+// Also, loops aren't rvalues and thus, we have to return explicitly
+return result;
+```
+
+4. Another possible solution is to manually assign all the properties, manually omitting the ones that has to be omitted. It's quite a lot boilerplate code.
+```js
+const obj = {
+  a: 'aValue',
+  b: 'bValue',
+  key: 'value',
+};
+
+// `obj` might have too many properties here and this might be inconvenient
+// to manually enumerate all of them
+return {
+  a: obj.a,
+  b: obj.b,
+};
+```
+
+5. Using spread with destructuring operator, to filter out all the undesired properties (for example, [`const { propertyIDontWant, ...newObject } = origObject; return newObject;`](https://github.com/devlato/proposal-plus-minus-spread/issues/1)).
+```js
+const obj = {
+  a: 'aValue',
+  b: 'bValue',
+  key: 'value',
+};
+
+// `result` can't be returned directly from here, and also, an unnecessary variable `key` is created
+const { key, ...result } = obj;
+// So we have to return explicitly
+return result;
+```
+
+6. And the last possible solution is to assign undefined to the key to be removed – but it's far from the ideal way to solve that issue, because the key would still exist in the object, meaning that if we enumerate through all the properties, there will be an undefined value for that key.
+```js
+const obj = {
+  a: 'aValue',
+  b: 'bValue',
+  key: 'value',
+};
+
+return {  
+  ...obj,
+  // Even though `obj[key]` is `undefined`, `obj.hasOwnProperty('key')` would return true,
+  // producing undesired side effects
+  key: undefined,
+};
+```
 
 
 ## Additional proposal: plus operator (optional)
