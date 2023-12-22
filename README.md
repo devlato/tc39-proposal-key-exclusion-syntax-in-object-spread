@@ -1,56 +1,137 @@
-# proposal-plus-minus-spread
+# Key exclusion and inclusion syntax in object spread
 
-Minus and plus operators: a spread operator enhancement proposal for JavaScript / ECMAScript
+ECMAScript proposal and reference implementation for exclusion and inclusion syntax in the object spread.
+
+**Author(s):** Denis Tokarev (Canva)
+
+**Champion:** not identified
+
+**Stage:** 0
 
 
 ## Motivation
 
-Since the object spread operator spec had landed, it has become widely used by devs. The reason for that is quite obvious – it's declarative, easily readable and straightforward way to produce an object from other objects. However, there are still use cases when devs have to write imperative code for performing quite simple operations. An example of such operation is filtering out an item from an object by key.
+Since its introduction to the specification, [the object spread syntax](https://github.com/tc39/proposal-object-rest-spread) has gained extreme popularity in the codebases of most organizations and open-source projects. Being declarative, the object spread syntax is easy to use, read, understand, and maintain.
 
-Let's illustrate this wth code. Let's assume we've got an object `obj`:
+However, when the use case is slightly more complex than just merging a few objects, the developers don't have the luxury of writing declarative code. 
+
+Perhaps the most popular example is removing a key from the result object:
 
 ```js
-const obj = {
-  a: 1,
-  b: {
-    b1: 21,
-    b2: 22,
-  },
-  c: 3,
+// When the key name is known statically
+const sanitizedOpts = (opts) => {
+  const result = {
+    ...PRIVATE_OPTS,
+    ..opts,
+  };
+
+  // Removing the key "keyThatMustNotBeThere" from the result
+  delete result.keyThatMustNotBeThere;
+
+  return result;
+};
+
+// When there are multiple key names known statically
+const sanitizedOpts = (opts) => {
+  const result = {
+    ...PRIVATE_OPTS,
+    ..opts,
+  };
+
+  // Removing the key "keyThatMustNotBeThere" from the result
+  delete result.keyThatMustNotBeThere;
+  delete result.keyThatAlsoMustNotBeThere;
+
+  return result;
+};
+
+// When the key name is not known beforehand
+const sanitizedOpts = (opts) => {
+  const result = {
+    ...PRIVATE_OPTS,
+    ..opts,
+  };
+
+  // Removing the key stored in KEY_THAT_MUST_NOT_BE_THERE from the result
+  delete result[KEY_THAT_MUST_NOT_BE_THERE];
+
+  return result;
+};
+
+// When there are multiple keys to remove
+const sanitizedOpts = (opts) => {
+  const result = {
+    ...PRIVATE_OPTS,
+    ..opts,
+  };
+
+  // Removing all the key names stored in KEYS_TO_REMOVE from the result
+  KEYS_TO_REMOVE.forEach((key) => {
+    delete result[key];
+  });
+
+  return result;
 };
 ```
 
-If we want to take out an item from `obj.b` by its key (eg. `b1`) using a declarative paradigm, we have to write something like that (let's write it as a function, to cover a broader case when it does something meaningful before returning a result):
+Removing keys this way has a few significant disadvantages:
+- It is wordy.
+- It is non-declarative and breaks the declarative paradigm of object spread.
+- It makes the JS engine do extra work. First, the object spread will copy all the properties from all objects, and then we have to manually remove some of them, consuming additional CPU cycles, allocating the memory, and potentially, making the garbage collector care about a few more objects.
+
+What if there was a way to give developers more declarative superpowers here?
+
+
+## Proposed solution
+
+### The key exclusion syntax
+
+So, what if we could tell the JS engine not to copy some of the keys to the spread result at all? I am glad to present to you the key exclusion syntax, also mentioned as the minus syntax below.
+
+Looking into the aforementioned examples, all the problems would be solved elegantly:
 
 ```js
-const removeB1 = (src) => ({
-  ...src,
-  b: Object.keys(src.b).reduce((acc, key) => key === 'b1' ? acc : { ...acc, [key]: src.b[key] }, {}),
-});
+// When the key name is known statically
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -keyThatMustNotBeThere, // The key exclusion syntax in action!
+  };
+};
+
+// When there are multiple keys with known names
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -keyThatMustNotBeThere,
+    -keyThatAlsoMustNotBeThere, // ...supporting multiple keys!
+  };
+};
+
+// When the key name is not known beforehand
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -[KEY_THAT_MUST_NOT_BE_THERE], // ... and dynamic keys!
+  };
+};
+
+// When there are multiple keys to remove
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -[...KEYS_TO_REMOVE], // ... and multiple dynamic keys!
+  };
+};
 ```
 
-This line, in particular, requires some time to understand what's going on:
+#### Why the dash/the minus character?
 
-```js
-  b: Object.keys(src.b).reduce((acc, key) => key === 'b1' ? acc : { ...acc, [key]: src.b[key] }, {}),
-````
-
-
-## Proposal: the minus operator
-
-What I propose is to improve readability of that quite typical operation, by introducing a special operator, expressed by a minus sign `-`, into the language standard. This operator would allow omitting a key by prependng it with this operator, in the object spread body:
-
-```js
-const removeB1 = (src) => ({
-  ...src,
-  b: {
-    ...src.b,
-    -b1, // A minus operator!
-  },
-});
-```
-
-I propose using minus (`-`) sign because it doesn't conflict with existing language semantics, and thus is easier to implement.
+The assumption that it would be easier for the JS engines and transpilers to implement (because currently, the dash character is not expected before the key names in the object spread and thus won't conflict with any existing valid syntax).
 
 
 ### Execution order
