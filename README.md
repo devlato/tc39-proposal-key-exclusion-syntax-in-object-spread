@@ -129,199 +129,35 @@ const sanitizedOpts = (opts) => {
 };
 ```
 
-#### Why the dash/the minus character?
+#### Why the dash/minus character?
 
-The assumption that it would be easier for the JS engines and transpilers to implement (because currently, the dash character is not expected before the key names in the object spread and thus won't conflict with any existing valid syntax).
+The assumption is that it would be easier for the JS engines and transpilers to implement (because currently, the dash character is not expected before the key names in the object spread and thus won't conflict with any existing valid syntax).
 
 
-### Execution order
+#### Execution order
 
-Even though the minus operator is used in the object spread body, between the curly brackets, it must be applied to the result or spread operator (meaning that the  result would be order-independent; please see [this comment](https://github.com/devlato/proposal-plus-minus-spread/issues/3#issuecomment-740308156) for details).
-
-Let's take an example:
+The key exclusion syntax would only be allowed at the end of the spread operator, before the closing curly bracket. Since the exclusion syntax removes the specified keys from the result, allowing it at other places inside the object spread (e.g., between multiple spread objects), is likely to cause an ambiguity.
 
 ```js
-const result = {
-  ...objA,
-  ...objB,
-  -keyToRemove,
-};
-```
-
-It must be executed in the following order:
-1. We merge objects `objA` and `objB` into a new object
-2. We remove the key `keyToRemove` from that new object
-3. We assign the result to a const `result`.
-
-According to that, there's no difference at what position in the spread operator the minus operator is applied, so all these pieces of code would do the same:
-
-```js
-// Same
-const result = {
-  ...objA,
-  ...objB,
-  -keyToRemove,
-};
-
-// Also same!
-const result = {
-  ...objA,
-  -keyToRemove,
-  ...objB,
-};
-
-// And this!
-const result = {
-  -keyToRemove,
-  ...objA,
-  ...objB,
-};
-```
-
-The second consequence is that in a particular object spread, a minus operator can be applied to each key only once.
-
-
-### Alternatives
-
-For sure, there are existing alternatives to the proposed minus operator.
-
-1. The [delete operator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete). Although, it cannot be used declaratively, meaning that the object produced by object spread must be assgned to a variable first, and only then we can remove the property from it by its key:
-```js
-const obj = {
-  a: 'aValue',
-  b: 'bValue',
-  key: 'value',
-};
-
-// To avoid mutating the original object, we create a copy
-const result = { ...obj };
-// Then we imperatively delete the key
-delete result.key;
-// And since the above line isn't an rvalue, we have to return the result explicitly
-return result;
-```
-
-2. `Object.keys(obj).filter(...).reduce(...)` which is a block of repeated code that takes a bit of time to read and understand:
-```js
-const obj = {
-  a: 'aValue',
-  b: 'bValue',
-  key: 'value',
-};
-
-// A bit wordy, ineffective, and too difficult to read
-return Object
-    .keys(obj)
-    .filter((k) => k !== 'key')
-    .reduce((acc, k) => ({ ...acc, [k]: obj[k] }), {});
-```
-
-3. The third approach is even more imperative – it's `for ... of` loop or any related alternative.
-```js
-const obj = {
-  a: 'aValue',
-  b: 'bValue',
-  key: 'value',
-};
-
-// A bit wordy `for ... of` loop
-const result = {};
-for (const [key, value] of Object.entries(obj)) {
-   if (key !== 'key') {
-      result[key] = value;
-   }
-}
-// Also, loops aren't rvalues and thus, we have to return explicitly
-return result;
-```
-
-4. Another possible solution is to manually assign all the properties, manually omitting the ones that has to be omitted. It's quite a lot boilerplate code.
-```js
-const obj = {
-  a: 'aValue',
-  b: 'bValue',
-  key: 'value',
-};
-
-// `obj` might have too many properties here and this might be inconvenient
-// to manually enumerate all of them
-return {
-  a: obj.a,
-  b: obj.b,
-};
-```
-
-5. Using spread with destructuring operator, to filter out all the undesired properties (for example, [`const { propertyIDontWant, ...newObject } = origObject; return newObject;`](https://github.com/devlato/proposal-plus-minus-spread/issues/1)).
-```js
-const obj = {
-  a: 'aValue',
-  b: 'bValue',
-  key: 'value',
-};
-
-// `result` can't be returned directly from here, and also, an unnecessary variable `key` is created
-const { key, ...result } = obj;
-// So we have to return explicitly
-return result;
-```
-
-6. And the last possible solution is to assign undefined to the key to be removed – but it's far from the ideal way to solve that issue, because the key would still exist in the object, meaning that if we enumerate through all the properties, there will be an undefined value for that key.
-```js
-const obj = {
-  a: 'aValue',
-  b: 'bValue',
-  key: 'value',
-};
-
-return {  
-  ...obj,
-  // Even though `obj[key]` is `undefined`, `obj.hasOwnProperty('key')` would return true,
-  // producing undesired side effects
-  key: undefined,
+// When the key name is known statically
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    -keyThatMustNotBeThere, // SyntaxError: the key exclusion syntax can only be used at the end of the object spread
+    ..opts,
+  };
 };
 ```
 
 
-## Additional proposal: plus operator (optional)
+### The key inclusion syntax
 
-For the API consistency, I'm proposing to add a plus operator (expressed by a prepending `+` sign), which would allow to forcefully specify a value for a given key in the same manner. The main benefit of that is ability to explicitely override a particular key, without having to care about code lines order.
 
-```js
-const result = {
-  ...objA,
-  ...objB,
-  +keyToAdd: valueToAdd,
-};
-```
+## Specification
 
-For instance:
+WIP
 
-```js
-// Same
-const result = {
-  ...objA,
-  ...objB,
-  +keyToAdd: 'test',
-};
 
-// Also same!
-const result = {
-  ...objA,
-  +keyToAdd: 'test',
-  ...objB,
-};
+## Implementations
 
-// And this!
-const result = {
-  +keyToAdd: 'test',
-  ...objA,
-  ...objB,
-};
-```
-
-All the variants of the code from the example above must be executed in the following order:
-1. We merge objects `objA` and `objB` into a new object
-2. We assign a value `'test'` to a key `keyToAdd` to that new object
-3. We assign the result to a const `result`.
-
-As a consequence of that, we can assert that in a particular object spread, a plus operator can be applied to each key only once.
+* Babel plugin – WIP
