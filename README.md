@@ -1,6 +1,6 @@
-# Key exclusion and inclusion syntax in object spread
+# Key exclusion syntax in object spread
 
-ECMAScript proposal and reference implementation for exclusion and inclusion syntax in the object spread.
+ECMAScript proposal and reference implementation for exclusion syntax in the object spread.
 
 **Author(s):** Denis Tokarev (Canva)
 
@@ -148,9 +148,6 @@ const sanitizedOpts = (opts) => {
   };
 };
 ```
-
-
-### The key inclusion syntax
 
 
 ## Specification
