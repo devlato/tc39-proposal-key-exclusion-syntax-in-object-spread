@@ -134,6 +134,158 @@ const sanitizedOpts = (opts) => {
 The assumption is that it would be easier for the JS engines and transpilers to implement (because currently, the dash character is not expected before the key names in the object spread and thus won't conflict with any existing valid syntax).
 
 
+#### Why bother if it's only syntactic sugar?
+
+Technically, the object spread itself is just syntactic sugar over the [Object.assign()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign); nevertheless, it has been successfully adopted and loved since its introduction into the language. This proposal would make it even more powerful.
+
+#### What would the desugared code look like?
+
+Let's look at a few possible scenarios.
+
+##### Statically known key name
+
+```js
+// When the key name is known statically
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -keyThatMustNotBeThere, // The key exclusion syntax in action!
+  };
+};
+```
+
+This would be desugared into this:
+
+```js
+const sanitizedOpts = (opts) => {
+  const _$1 = Object.assign(
+    {},
+    PRIVATE_OPTS,
+    opts,
+  });
+
+  delete _$1.keyThatMustNotBeThere;
+
+  return _$1;
+};
+```
+
+##### Multiple keys with statically known names
+
+```js
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -keyThatMustNotBeThere,
+    -keyThatAlsoMustNotBeThere, // ...supporting multiple keys!
+  };
+};
+```
+
+It becomes this:
+
+```js
+const sanitizedOpts = (opts) => {
+  const _$1 = Object.assign(
+    {},
+    PRIVATE_OPTS,
+    opts,
+  });
+
+  delete _$1.keyThatMustNotBeThere;
+  delete _$1.keyThatAlsoMustNotBeThere;
+
+  return _$1;
+};
+```
+
+##### The key name is stored in a variable
+
+```js
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -[KEY_THAT_MUST_NOT_BE_THERE], // ... and dynamic keys!
+  };
+};
+```
+
+```js
+const sanitizedOpts = (opts) => {
+  const _$1 = Object.assign(
+    {},
+    PRIVATE_OPTS,
+    opts,
+  });
+
+  delete _$1[KEY_THAT_MUST_NOT_BE_THERE];
+
+  return _$1;
+};
+```
+
+##### Multiple keys with names stored in a variable
+
+```js
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -[...KEYS_TO_REMOVE], // ... and multiple dynamic keys!
+  };
+};
+```
+
+```js
+const sanitizedOpts = (opts) => {
+  const _$1 = Object.assign(
+    {},
+    PRIVATE_OPTS,
+    opts,
+  });
+
+  KEYS_TO_REMOVE.forEach((key) => {
+    delete _$1[key];
+  });
+
+  return _$1;
+};
+```
+
+##### Mixed case
+
+```js
+const sanitizedOpts = (opts) => {
+  return {
+    ...PRIVATE_OPTS,
+    ..opts,
+    -keyThatMustNotBeThere,
+    -[...KEYS_TO_REMOVE], // ... and multiple dynamic keys!
+  };
+};
+```
+
+```js
+const sanitizedOpts = (opts) => {
+  const _$1 = Object.assign(
+    {},
+    PRIVATE_OPTS,
+    opts,
+  });
+
+  delete _$1.keyThatMustNotBeThere;
+  KEYS_TO_REMOVE.forEach((key) => {
+    delete _$1[key];
+  });
+
+  return _$1;
+};
+```
+
+
 #### Execution order
 
 The key exclusion syntax would only be allowed at the end of the spread operator, before the closing curly bracket. Since the exclusion syntax removes the specified keys from the result, allowing it at other places inside the object spread (e.g., between multiple spread objects), is likely to cause an ambiguity.
