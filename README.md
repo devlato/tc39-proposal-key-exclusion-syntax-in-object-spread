@@ -1,312 +1,210 @@
-# Key exclusion syntax in object spread
+# Key Exclusion Syntax in Object Spread
 
-ECMAScript proposal and reference implementation for exclusion syntax in the object spread.
+## ECMAScript Proposal: Exclusion Syntax in Object Spread
 
-**Author(s):** Denis Tokarev (Canva)
+**Author:** Denis Tokarev (Canva)  
+**Champion:** TBD  
+**Stage:** 0  
 
-**Champion:** not identified
-
-**Stage:** 0
-
+---
 
 ## Motivation
 
-Since its introduction to the specification, [the object spread syntax](https://github.com/tc39/proposal-object-rest-spread) has gained extreme popularity in the codebases of most organizations and open-source projects. Being declarative, the object spread syntax is easy to use, read, understand, and maintain.
+Since its introduction, the [object spread syntax](https://github.com/tc39/proposal-object-rest-spread) has become a cornerstone of modern JavaScript. Its declarative nature makes it highly readable and maintainable. However, current syntax falls short when developers need to exclude keys from objects, especially in complex use cases with multiple spreads.
 
-However, when the use case is slightly more complex than just merging a few objects, the developers don't have the luxury of writing declarative code. 
+---
 
-Perhaps the most popular example is removing a key from the result object:
+## Proposal
+
+### Key Exclusion Syntax: `-key`
+
+Introducing a concise, declarative way to exclude keys at any point in an object spread expression. The syntax dynamically removes the specified keys from all properties accumulated up to that point.
+
+---
+
+## Examples
+
+### Basic Example: Key Exclusion at the End of Spread
+
+The exclusion syntax can be used to remove keys from the final merged result:
 
 ```js
-// When the key name is known statically
-const sanitizedOpts = (opts) => {
-  const result = {
-    ...PRIVATE_OPTS,
-    ..opts,
-  };
-
-  // Removing the key "keyThatMustNotBeThere" from the result
-  delete result.keyThatMustNotBeThere;
-
-  return result;
-};
-
-// When there are multiple key names known statically
-const sanitizedOpts = (opts) => {
-  const result = {
-    ...PRIVATE_OPTS,
-    ..opts,
-  };
-
-  // Removing the key "keyThatMustNotBeThere" from the result
-  delete result.keyThatMustNotBeThere;
-  delete result.keyThatAlsoMustNotBeThere;
-
-  return result;
-};
-
-// When the key name is not known beforehand
-const sanitizedOpts = (opts) => {
-  const result = {
-    ...PRIVATE_OPTS,
-    ..opts,
-  };
-
-  // Removing the key stored in KEY_THAT_MUST_NOT_BE_THERE from the result
-  delete result[KEY_THAT_MUST_NOT_BE_THERE];
-
-  return result;
-};
-
-// When there are multiple keys to remove
-const sanitizedOpts = (opts) => {
-  const result = {
-    ...PRIVATE_OPTS,
-    ..opts,
-  };
-
-  // Removing all the key names stored in KEYS_TO_REMOVE from the result
-  KEYS_TO_REMOVE.forEach((key) => {
-    delete result[key];
-  });
-
-  return result;
-};
+const sanitizedOpts = (opts) => ({
+  ...src,
+  ...a,
+  ...b,
+  -keyToExclude, // Removes 'keyToExclude' from the final merged result
+});
 ```
 
-Removing keys this way has a few significant disadvantages:
-- It is wordy.
-- It is non-declarative and breaks the declarative paradigm of object spread.
-- It makes the JS engine do extra work. First, the object spread will copy all the properties from all objects, and then we have to manually remove some of them, consuming additional CPU cycles, allocating the memory, and potentially, making the garbage collector care about a few more objects.
+### Using Exclusion in the Middle of a Spread
 
-What if there was a way to give developers more declarative superpowers here?
-
-
-## Proposed solution
-
-### The key exclusion syntax
-
-So, what if we could tell the JS engine not to copy some of the keys to the spread result at all? I am glad to present to you the key exclusion syntax, also mentioned as the minus syntax below.
-
-Looking into the aforementioned examples, all the problems would be solved elegantly:
+The exclusion syntax can also be used in the middle of a spread expression, removing keys from the object as it is being built:
 
 ```js
-// When the key name is known statically
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -keyThatMustNotBeThere, // The key exclusion syntax in action!
-  };
-};
-
-// When there are multiple keys with known names
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -keyThatMustNotBeThere,
-    -keyThatAlsoMustNotBeThere, // ...supporting multiple keys!
-  };
-};
-
-// When the key name is not known beforehand
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -[KEY_THAT_MUST_NOT_BE_THERE], // ... and dynamic keys!
-  };
-};
-
-// When there are multiple keys to remove
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -[...KEYS_TO_REMOVE], // ... and multiple dynamic keys!
-  };
-};
+const sanitizedOpts = (opts) => ({
+  ...src,
+  ...a,
+  -key1, // Removes 'key1' from { ...src, ...a }
+  ...b,  // Spread 'b' after 'key1' is excluded
+});
 ```
 
-#### Why the dash/minus character?
+### Multiple Exclusions at Different Points
 
-The assumption is that it would be easier for the JS engines and transpilers to implement (because currently, the dash character is not expected before the key names in the object spread and thus won't conflict with any existing valid syntax).
-
-
-#### Why bother if it's only syntactic sugar?
-
-Technically, the object spread itself is just syntactic sugar over the [Object.assign()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign); nevertheless, it has been successfully adopted and loved since its introduction into the language. This proposal would make it even more powerful.
-
-#### What would the desugared code look like?
-
-Let's look at a few possible scenarios.
-
-##### Statically known key name
+Keys can be excluded multiple times at different points in the spread expression:
 
 ```js
-// When the key name is known statically
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -keyThatMustNotBeThere, // The key exclusion syntax in action!
-  };
-};
+const sanitizedOpts = (opts) => ({
+  ...src,
+  -key1, // Removes 'key1' from { ...src }
+  ...a,
+  -key2, // Removes 'key2' from { ...src, ...a }
+  ...b,
+});
 ```
 
-This would be desugared into this:
+---
 
+## Behavior
+
+### Desugaring Examples
+
+#### Exclude Key at the End
+Input:
+```js
+const sanitizedOpts = (opts) => ({
+  ...src,
+  ...a,
+  ...b,
+  -keyToExclude,
+});
+```
+Desugared:
 ```js
 const sanitizedOpts = (opts) => {
-  const _$1 = Object.assign(
-    {},
-    PRIVATE_OPTS,
-    opts,
-  });
-
-  delete _$1.keyThatMustNotBeThere;
-
+  const _$1 = { ...src, ...a, ...b };
+  delete _$1.keyToExclude;
   return _$1;
 };
 ```
 
-##### Multiple keys with statically known names
-
+#### Exclude Key in the Middle
+Input:
+```js
+const sanitizedOpts = (opts) => ({
+  ...src,
+  ...a,
+  -key1,
+  ...b,
+});
+```
+Desugared:
 ```js
 const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -keyThatMustNotBeThere,
-    -keyThatAlsoMustNotBeThere, // ...supporting multiple keys!
-  };
+  const _$1 = { ...src, ...a };
+  delete _$1.key1;
+  const _$2 = { ..._$1, ...b };
+  return _$2;
 };
 ```
 
-It becomes this:
-
+#### Multiple Exclusions at Different Points
+Input:
+```js
+const sanitizedOpts = (opts) => ({
+  ...src,
+  -key1,
+  ...a,
+  -key2,
+  ...b,
+});
+```
+Desugared:
 ```js
 const sanitizedOpts = (opts) => {
-  const _$1 = Object.assign(
-    {},
-    PRIVATE_OPTS,
-    opts,
-  });
+  const _$1 = { ...src };
+  delete _$1.key1;
+  const _$2 = { ..._$1, ...a };
+  delete _$2.key2;
+  const _$3 = { ..._$2, ...b };
+  return _$3;
+};
+```
 
-  delete _$1.keyThatMustNotBeThere;
-  delete _$1.keyThatAlsoMustNotBeThere;
+---
 
+### Performance-Optimized Desugaring Example
+
+For maximum performance, excluded keys can be omitted during the object-building process entirely, avoiding unnecessary copying or deletion.
+
+#### Exclude Key Without Any Copying
+Input:
+```js
+const sanitizedOpts = (opts) => ({
+  ...src,
+  ...a,
+  -key1,
+  ...b,
+});
+```
+Optimized Desugared Code:
+```js
+const sanitizedOpts = (opts) => {
+  const _$1 = {};
+  for (const key in src) {
+    if (key !== 'key1') _$1[key] = src[key];
+  }
+  for (const key in a) {
+    if (key !== 'key1') _$1[key] = a[key];
+  }
+  for (const key in b) {
+    _$1[key] = b[key]; // No exclusions here since key1 has already been removed
+  }
   return _$1;
 };
 ```
 
-##### The key name is stored in a variable
-
+#### Exclude Multiple Keys Without Any Copying
+Input:
 ```js
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -[KEY_THAT_MUST_NOT_BE_THERE], // ... and dynamic keys!
-  };
-};
+const sanitizedOpts = (opts) => ({
+  ...src,
+  ...a,
+  -[...keysToExclude],
+  ...b,
+});
 ```
-
+Optimized Desugared Code:
 ```js
 const sanitizedOpts = (opts) => {
-  const _$1 = Object.assign(
-    {},
-    PRIVATE_OPTS,
-    opts,
-  });
-
-  delete _$1[KEY_THAT_MUST_NOT_BE_THERE];
-
+  const _$1 = {};
+  for (const key in src) {
+    if (!keysToExclude.includes(key)) _$1[key] = src[key];
+  }
+  for (const key in a) {
+    if (!keysToExclude.includes(key)) _$1[key] = a[key];
+  }
+  for (const key in b) {
+    _$1[key] = b[key]; // No exclusions here since all keys in keysToExclude are skipped before this point
+  }
   return _$1;
 };
 ```
 
-##### Multiple keys with names stored in a variable
+---
 
-```js
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -[...KEYS_TO_REMOVE], // ... and multiple dynamic keys!
-  };
-};
-```
+## Advantages
 
-```js
-const sanitizedOpts = (opts) => {
-  const _$1 = Object.assign(
-    {},
-    PRIVATE_OPTS,
-    opts,
-  });
+- **Improved Readability**: Keeps code clean and declarative.
+- **Fine-Grained Control**: Allows exclusions at specific points in the spread expression.
+- **Performance Gains**: Avoids unnecessary property deletions by not copying excluded keys.
+- **Reduced Boilerplate**: Simplifies exclusion patterns in complex merges.
 
-  KEYS_TO_REMOVE.forEach((key) => {
-    delete _$1[key];
-  });
+---
 
-  return _$1;
-};
-```
+## Conclusion
 
-##### Mixed case
+The proposed key exclusion syntax improves the flexibility and clarity of object spread operations, addressing common pain points in JavaScript development. Its ability to operate contextually within spread expressions and its potential for performance optimization make it a valuable addition to the language.
 
-```js
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    ..opts,
-    -keyThatMustNotBeThere,
-    -[...KEYS_TO_REMOVE], // ... and multiple dynamic keys!
-  };
-};
-```
-
-```js
-const sanitizedOpts = (opts) => {
-  const _$1 = Object.assign(
-    {},
-    PRIVATE_OPTS,
-    opts,
-  });
-
-  delete _$1.keyThatMustNotBeThere;
-  KEYS_TO_REMOVE.forEach((key) => {
-    delete _$1[key];
-  });
-
-  return _$1;
-};
-```
-
-
-#### Execution order
-
-The key exclusion syntax would only be allowed at the end of the spread operator, before the closing curly bracket. Since the exclusion syntax removes the specified keys from the result, allowing it at other places inside the object spread (e.g., between multiple spread objects), is likely to cause an ambiguity.
-
-```js
-// When the key name is known statically
-const sanitizedOpts = (opts) => {
-  return {
-    ...PRIVATE_OPTS,
-    -keyThatMustNotBeThere, // SyntaxError: the key exclusion syntax can only be used at the end of the object spread
-    ..opts,
-  };
-};
-```
-
-
-## Specification
-
-WIP
-
-
-## Implementations
-
-* Babel plugin – WIP
+Contributions and feedback are welcome!
