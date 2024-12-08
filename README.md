@@ -250,8 +250,9 @@ const sanitizedOpts = (() => {
 
 - **Supports Dynamic and Complex Keys**: Handles variables, strings with spaces, symbols, and expressions as keys.
 - **Improved Readability**: Keeps code clean and declarative.
-- **Performance Gains**: Avoids unnecessary property deletions by not copying excluded keys where feasible.
+- **Potential Performance Gains**: May avoid unnecessary property deletions by skipping excluded keys during the copy process when feasible. In theory, this could ensure predictable Big O performance.
 - **Reduced Boilerplate**: Simplifies exclusion patterns in complex merges.
+- **Smaller Bundles**: Reduces the amount of code required to perform the key exclusion.
 
 ---
 
