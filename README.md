@@ -10,7 +10,7 @@
 
 ## Motivation
 
-Since its introduction, the [object spread syntax](https://github.com/tc39/proposal-object-rest-spread) has become a cornerstone of modern JavaScript. Its declarative nature makes it highly readable and maintainable. However, current syntax falls short when developers need to exclude keys from objects, especially in complex use cases with multiple spreads.
+Since its introduction, the [object spread syntax](https://github.com/tc39/proposal-object-rest-spread) has become a cornerstone of modern JavaScript. Its declarative nature makes it highly readable and maintainable. However, current syntax falls short when developers need to exclude keys from objects, especially in complex use cases with dynamic keys or intermediate exclusions.
 
 ---
 
@@ -18,186 +18,177 @@ Since its introduction, the [object spread syntax](https://github.com/tc39/propo
 
 ### Key Exclusion Syntax: `-key`
 
-Introducing a concise, declarative way to exclude keys at any point in an object spread expression. The syntax dynamically removes the specified keys from all properties accumulated up to that point.
+The key exclusion syntax introduces a way to declaratively remove keys from objects during object spread operations. It works with:
+- **Static keys**
+- **Dynamic keys (e.g., values stored in variables)**
+- **Complex key expressions**
 
 ---
 
 ## Examples
 
-### Basic Example: Key Exclusion at the End of Spread
-
-The exclusion syntax can be used to remove keys from the final merged result:
+### 1. Excluding Static Keys
+The most basic use case, excluding specific keys directly in the spread syntax:
 
 ```js
-const sanitizedOpts = (opts) => ({
-  ...src,
+const sanitizedOpts = {
   ...a,
+  -key1,
   ...b,
-  -keyToExclude, // Removes 'keyToExclude' from the final merged result
-});
+  -key2,
+};
 ```
 
-### Using Exclusion in the Middle of a Spread
-
-The exclusion syntax can also be used in the middle of a spread expression, removing keys from the object as it is being built:
+### 2. Excluding Dynamic Keys (including Symbols)
+Dynamic keys, such as those stored in variables, can also be excluded:
 
 ```js
-const sanitizedOpts = (opts) => ({
-  ...src,
+const sanitizedOpts = {
   ...a,
-  -key1, // Removes 'key1' from { ...src, ...a }
-  ...b,  // Spread 'b' after 'key1' is excluded
-});
+  -[dynamicKey], // Excludes the value stored in `dynamicKey`
+  ...b,
+};
 ```
 
-### Multiple Exclusions at Different Points
-
-Keys can be excluded multiple times at different points in the spread expression:
+### 3. Excluding Multiple Keys Dynamically
+You can exclude an array of keys using the spread operator within the exclusion syntax:
 
 ```js
-const sanitizedOpts = (opts) => ({
-  ...src,
-  -key1, // Removes 'key1' from { ...src }
+const sanitizedOpts = {
   ...a,
-  -key2, // Removes 'key2' from { ...src, ...a }
+  -[...keysToExclude], // Excludes all keys in the `keysToExclude` array
   ...b,
-});
+};
+```
+
+### 4. Using Complex Expressions as Keys
+Key expressions can be computed on-the-fly:
+
+```js
+const sanitizedOpts = {
+  ...a,
+  -[dynamicPrefix + "Id"], // Removes a computed key like "userId" if `dynamicPrefix` is "user"
+  ...b,
+};
 ```
 
 ---
 
 ## Behavior
 
+### Execution Order
+Key exclusions operate sequentially during object spreading. The syntax removes the specified keys from all properties accumulated **up to that point**.
+
+```js
+const sanitizedOpts = {
+  ...src,
+  ...a,
+  -key1, // Removes 'key1' from { ...src, ...a }
+  ...b,
+};
+```
+
 ### Desugaring Examples
 
-#### Exclude Key at the End
+#### 1. Excluding Static Keys
 Input:
 ```js
-const sanitizedOpts = (opts) => ({
-  ...src,
-  ...a,
-  ...b,
-  -keyToExclude,
-});
-```
-Desugared:
-```js
-const sanitizedOpts = (opts) => {
-  const _$1 = { ...src, ...a, ...b };
-  delete _$1.keyToExclude;
-  return _$1;
-};
-```
-
-#### Exclude Key in the Middle
-Input:
-```js
-const sanitizedOpts = (opts) => ({
-  ...src,
-  ...a,
-  -key1,
-  ...b,
-});
-```
-Desugared:
-```js
-const sanitizedOpts = (opts) => {
-  const _$1 = { ...src, ...a };
-  delete _$1.key1;
-  const _$2 = { ..._$1, ...b };
-  return _$2;
-};
-```
-
-#### Multiple Exclusions at Different Points
-Input:
-```js
-const sanitizedOpts = (opts) => ({
+const sanitizedOpts = {
   ...src,
   -key1,
   ...a,
-  -key2,
-  ...b,
-});
+};
 ```
 Desugared:
 ```js
-const sanitizedOpts = (opts) => {
-  const _$1 = { ...src };
-  delete _$1.key1;
-  const _$2 = { ..._$1, ...a };
-  delete _$2.key2;
-  const _$3 = { ..._$2, ...b };
-  return _$3;
-};
-```
-
----
-
-### Performance-Optimized Desugaring Example
-
-For maximum performance, excluded keys can be omitted during the object-building process entirely, avoiding unnecessary copying or deletion.
-
-#### Exclude Key Without Any Copying
-Input:
-```js
-const sanitizedOpts = (opts) => ({
-  ...src,
-  ...a,
-  -key1,
-  ...b,
-});
-```
-Optimized Desugared Code:
-```js
-const sanitizedOpts = (opts) => {
+const sanitizedOpts = (() => {
   const _$1 = {};
   for (const key in src) {
     if (key !== 'key1') _$1[key] = src[key];
   }
   for (const key in a) {
-    if (key !== 'key1') _$1[key] = a[key];
-  }
-  for (const key in b) {
-    _$1[key] = b[key]; // No exclusions here since key1 has already been removed
+    _$1[key] = a[key];
   }
   return _$1;
-};
+})();
 ```
 
-#### Exclude Multiple Keys Without Any Copying
+#### 2. Excluding Dynamic Keys
 Input:
 ```js
-const sanitizedOpts = (opts) => ({
+const sanitizedOpts = {
   ...src,
+  -[dynamicKey],
   ...a,
-  -[...keysToExclude],
-  ...b,
-});
+};
 ```
-Optimized Desugared Code:
+Desugared:
 ```js
-const sanitizedOpts = (opts) => {
+const sanitizedOpts = (() => {
+  const _$1 = {};
+  for (const key in src) {
+    if (key !== dynamicKey) _$1[key] = src[key];
+  }
+  for (const key in a) {
+    _$1[key] = a[key];
+  }
+  return _$1;
+})();
+```
+
+#### 3. Excluding Multiple Dynamic Keys
+Input:
+```js
+const sanitizedOpts = {
+  ...src,
+  -[...keysToExclude],
+  ...a,
+};
+```
+Desugared:
+```js
+const sanitizedOpts = (() => {
   const _$1 = {};
   for (const key in src) {
     if (!keysToExclude.includes(key)) _$1[key] = src[key];
   }
   for (const key in a) {
-    if (!keysToExclude.includes(key)) _$1[key] = a[key];
-  }
-  for (const key in b) {
-    _$1[key] = b[key]; // No exclusions here since all keys in keysToExclude are skipped before this point
+    _$1[key] = a[key];
   }
   return _$1;
+})();
+```
+
+#### 4. Using Complex Expressions
+Input:
+```js
+const sanitizedOpts = {
+  ...src,
+  -[dynamicPrefix + "Id"],
+  ...a,
 };
+```
+Desugared:
+```js
+const sanitizedOpts = (() => {
+  const _$1 = {};
+  const computedKey = dynamicPrefix + "Id";
+  for (const key in src) {
+    if (key !== computedKey) _$1[key] = src[key];
+  }
+  for (const key in a) {
+    _$1[key] = a[key];
+  }
+  return _$1;
+})();
 ```
 
 ---
 
 ## Advantages
 
+- **Supports Dynamic and Complex Keys**: Handles variables and expressions as keys.
 - **Improved Readability**: Keeps code clean and declarative.
-- **Fine-Grained Control**: Allows exclusions at specific points in the spread expression.
 - **Performance Gains**: Avoids unnecessary property deletions by not copying excluded keys.
 - **Reduced Boilerplate**: Simplifies exclusion patterns in complex merges.
 
@@ -205,6 +196,6 @@ const sanitizedOpts = (opts) => {
 
 ## Conclusion
 
-The proposed key exclusion syntax improves the flexibility and clarity of object spread operations, addressing common pain points in JavaScript development. Its ability to operate contextually within spread expressions and its potential for performance optimization make it a valuable addition to the language.
+The proposed key exclusion syntax enhances the flexibility and clarity of object spread operations. Its ability to operate contextually and handle complex, dynamic keys makes it a powerful tool for JavaScript developers. By eliminating unnecessary object copies or deletions, it also provides performance benefits in large-scale applications.
 
 Contributions and feedback are welcome!
