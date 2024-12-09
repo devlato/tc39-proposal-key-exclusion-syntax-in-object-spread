@@ -76,18 +76,7 @@ const sanitizedOpts = {
 };
 ```
 
-### 5. Excluding Multiple Keys Dynamically
-You can exclude an array of keys using the spread operator within the exclusion syntax:
-
-```js
-const sanitizedOpts = {
-  ...a,
-  -[...keysToExclude], // Excludes all keys in the `keysToExclude` array
-  ...b,
-};
-```
-
-### 6. Using Symbols as Keys
+### 5. Using Symbols as Keys
 Symbols can also be excluded:
 
 ```js
@@ -98,7 +87,7 @@ const sanitizedOpts = {
 };
 ```
 
-### 7. Using Complex Expressions as Keys
+### 6. Using Complex Expressions as Keys
 Key expressions can be computed on-the-fly:
 
 ```js
@@ -203,27 +192,7 @@ const sanitizedOpts = (() => {
 })();
 ```
 
-#### 5. Excluding Multiple Keys Dynamically
-Input:
-```js
-const sanitizedOpts = {
-  ...src,
-  -[...keysToExclude],
-  ...a,
-};
-```
-Desugared:
-```js
-const sanitizedOpts = (() => {
-  const _$1 = {};
-  for (const key in src) _$1[key] = src[key];
-  for (const key of keysToExclude) delete _$1[key]; // Remove dynamic keys
-  for (const key in a) _$1[key] = a[key];
-  return _$1;
-})();
-```
-
-#### 6. Using Complex Expressions
+#### 5. Using Complex Expressions
 Input:
 ```js
 const sanitizedOpts = {
@@ -261,3 +230,27 @@ const sanitizedOpts = (() => {
 The proposed key exclusion syntax enhances the flexibility and clarity of object spread operations. Its ability to handle dynamic keys, complex expressions, strings with spaces, and symbols makes it a robust tool for JavaScript developers. By eliminating unnecessary object copies or deletions, it also provides performance benefits in large-scale applications.
 
 Contributions and feedback are welcome!
+
+## Graveyard
+
+### Excluding Multiple Keys Dynamically
+You can exclude an array of keys using the spread operator within the exclusion syntax:
+
+```js
+const sanitizedOpts = {
+  ...a,
+  -[...keysToExclude], // Excludes all keys in the `keysToExclude` array
+  ...b,
+};
+```
+
+Desugared:
+```js
+const sanitizedOpts = (() => {
+  const _$1 = {};
+  for (const key in src) _$1[key] = src[key];
+  for (const key of keysToExclude) delete _$1[key]; // Remove dynamic keys
+  for (const key in a) _$1[key] = a[key];
+  return _$1;
+})();
+```
