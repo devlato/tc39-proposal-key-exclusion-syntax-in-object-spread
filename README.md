@@ -254,3 +254,7 @@ const sanitizedOpts = (() => {
   return _$1;
 })();
 ```
+
+## Discussion
+
+* [(ES Discourse) Proposal: Key Exclusion Syntax in Object Spread](https://es.discourse.group/t/proposal-key-exclusion-syntax-in-object-spread/2238/2)
