@@ -258,3 +258,37 @@ const sanitizedOpts = (() => {
 ## Discussion
 
 * [(ES Discourse) Proposal: Key Exclusion Syntax in Object Spread](https://es.discourse.group/t/proposal-key-exclusion-syntax-in-object-spread/2238/2)
+
+## TODO
+
+The following is a high-level list of tasks to progress through each stage of the [TC39 proposal process](https://tc39.github.io/process-document/):
+
+### Stage 1 Entrance Criteria
+
+* [ ] Identified a "[champion][Champion]" who will advance the addition.
+* [x] [Prose][Prose] outlining the problem or need and the general shape of a solution.
+* [x] Illustrative [examples][Examples] of usage.
+* [ ] ~~High-level [API][API].~~
+
+### Stage 2 Entrance Criteria
+
+* [ ] [Initial specification text][Specification].
+* [ ] [Transpiler support][Transpiler] (_Optional_).
+
+### Stage 2.7 Entrance Criteria
+
+* [ ] [Complete specification text][Specification].
+* [ ] Designated reviewers have signed off on the current spec text:
+  * [ ] [Reviewer #1][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
+  * [ ] [Reviewer #2][Stage3Reviewer2] has [signed off][Stage3Reviewer2SignOff]
+* [ ] The [ECMAScript editor][Stage3Editor] has [signed off][Stage3EditorSignOff] on the current spec text.
+
+### Stage 3 Entrance Criteria
+
+* [ ] [Test262](https://github.com/tc39/test262) acceptance tests have  been written for mainline usage scenarios and [merged][Test262PullRequest].
+
+### Stage 4 Entrance Criteria
+
+* [ ] Two compatible implementations which pass the acceptance tests: [\[1\]][Implementation1], [\[2\]][Implementation2].
+* [ ] A [pull request][Ecma262PullRequest] has been sent to tc39/ecma262 with the integrated spec text.
+* [ ] The ECMAScript editor has signed off on the [pull request][Ecma262PullRequest].
