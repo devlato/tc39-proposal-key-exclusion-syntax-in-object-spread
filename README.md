@@ -265,30 +265,30 @@ The following is a high-level list of tasks to progress through each stage of th
 
 ### Stage 1 Entrance Criteria
 
-* [ ] Identified a "[champion][Champion]" who will advance the addition.
-* [x] [Prose][Prose] outlining the problem or need and the general shape of a solution.
-* [x] Illustrative [examples][Examples] of usage.
-* [ ] ~~High-level [API][API].~~
+* [ ] Identified a "champion" who will advance the addition.
+* [x] Prose outlining the problem or need and the general shape of a solution.
+* [x] Illustrative examples of usage.
+* [ ] ~~High-level API.~~
 
 ### Stage 2 Entrance Criteria
 
-* [ ] [Initial specification text][Specification].
-* [ ] [Transpiler support][Transpiler] (_Optional_).
+* [ ] [Initialspecification text.
+* [ ] Transpiler support (_Optional_).
 
 ### Stage 2.7 Entrance Criteria
 
-* [ ] [Complete specification text][Specification].
+* [ ] Complete specification text.
 * [ ] Designated reviewers have signed off on the current spec text:
-  * [ ] [Reviewer #1][Stage3Reviewer1] has [signed off][Stage3Reviewer1SignOff]
-  * [ ] [Reviewer #2][Stage3Reviewer2] has [signed off][Stage3Reviewer2SignOff]
-* [ ] The [ECMAScript editor][Stage3Editor] has [signed off][Stage3EditorSignOff] on the current spec text.
+  * [ ] Reviewer #1 has signed off
+  * [ ] Reviewer #2 has signed off
+* [ ] The ECMAScript editor has signed off on the current spec text.
 
 ### Stage 3 Entrance Criteria
 
-* [ ] [Test262](https://github.com/tc39/test262) acceptance tests have  been written for mainline usage scenarios and [merged][Test262PullRequest].
+* [ ] [Test262](https://github.com/tc39/test262) acceptance tests have been written for mainline usage scenarios and merged.
 
 ### Stage 4 Entrance Criteria
 
-* [ ] Two compatible implementations which pass the acceptance tests: [\[1\]][Implementation1], [\[2\]][Implementation2].
-* [ ] A [pull request][Ecma262PullRequest] has been sent to tc39/ecma262 with the integrated spec text.
-* [ ] The ECMAScript editor has signed off on the [pull request][Ecma262PullRequest].
+* [ ] Two compatible implementations which pass the acceptance tests: [1], [2].
+* [ ] A pull request has been sent to tc39/ecma262 with the integrated spec text.
+* [ ] The ECMAScript editor has signed off on the pull request.
