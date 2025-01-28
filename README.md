@@ -2,7 +2,7 @@
 
 ## ECMAScript Proposal: Exclusion Syntax in Object Spread
 
-**Author:** Denis Tokarev (Canva)  
+**Author:** Denis Tokarev
 **Champion:** TBD  
 **Stage:** 0  
 
